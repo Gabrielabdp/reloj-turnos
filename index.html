@@ -181,6 +181,7 @@ header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between
 .authform label{display:grid;gap:4px;font-size:.8rem;color:var(--muted);font-weight:600}
 .authform input{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;width:100%;color:var(--ink);font-size:1rem}
 .authform .btn{padding:12px}
+.hbtns{display:flex;gap:8px;flex-wrap:wrap}
 .syncnote{font-size:.8rem;color:var(--warn)}
 </style>
 
@@ -261,7 +262,7 @@ header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between
   <section class="panel">
     <div class="sethead">
       <h2>Registros de la semana</h2>
-      <button class="btn sm" id="addBtn">+ Agregar turno manual</button>
+      <div class="hbtns"><button class="btn sm" id="pdfBtn" type="button">Descargar PDF</button><button class="btn sm" id="addBtn">+ Agregar turno manual</button></div>
     </div>
     <div id="editorSlot"></div>
     <div class="log" id="log"></div>
@@ -850,6 +851,77 @@ function route(){
 }
 window.addEventListener('hashchange',()=>{ route(); render(); });
 route();
+
+/* ---------- Reporte PDF del período de pago ---------- */
+const PDF_LIBS=['https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js','https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js'];
+function loadScript(src){ return new Promise((ok,ko)=>{ if(document.querySelector(`script[src="${src}"]`)) return ok(); const s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=ko; document.head.appendChild(s); }); }
+async function makePDF(){
+  for(const s of PDF_LIBS) await loadScript(s);
+  const { jsPDF } = window.jspdf;
+  const now=Date.now(), W=weekData(now), pp=payPeriod(), set=S.settings, goal=set.goal||64;
+  const doc=new jsPDF({unit:'pt',format:'letter'}); const M=48; let y=56;
+  const ink=[17,26,46], blue=[37,80,224], muted=[91,101,120], green=[20,150,106];
+  const dlong=t=>new Date(t).toLocaleDateString('es-DO',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  const money2=(v,c)=>money(v,c);
+  doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(...ink); doc.text('Reporte de horas',M,y);
+  y+=18; doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...muted);
+  doc.text(`Período de pago: ${dlong(pp.ps)} 4:00 PM  –  ${dlong(pp.pe)} 3:59 PM`,M,y);
+  y+=13; doc.text(`Generado: ${new Date().toLocaleString('es-DO')}${uid?'  ·  '+($('who').textContent||''):''}`,M,y);
+  // Resumen
+  const plan=W.planSoFar*goal/64, diff=W.total-plan;
+  const rows=[['Horas trabajadas',`${fmt1(W.total)} h  (${hm(W.total*H)})`],['Meta del período',`${goal} h`],
+    ['Según plan a la fecha',`${fmt1(plan)} h`],['Diferencia',`${diff>=0?'+':'-'}${fmt1(Math.abs(diff))} h`]];
+  if(set.rate>0){
+    rows.push(['Tarifa',`${money2(set.rate,set.cur)} por hora`]);
+    if(set.pp){ const p=paypal(W.total);
+      rows.push(['Bruto',`${money2(p.grossUsd,'USD')}  ·  ${money2(p.grossUsd*(set.fx||61),'DOP')}`]);
+      rows.push([`Comisión PayPal (${set.ppFee}% + US$${Number(set.ppFixed).toFixed(2)})`,'- '+money2(p.fee,'USD')]);
+      if(set.ppOut==='DOP') rows.push(['Conversión a pesos y retiro (parte del período)','- '+money2(p.conv+p.wd,'DOP')]);
+      if(set.ppOut==='USDBANK') rows.push(['Retiro a banco (parte del período)','- '+money2(p.wd,'USD')]);
+      rows.push(['Neto estimado',`${money2(p.netDop,'DOP')}  ·  ${money2(p.netUsd,'USD')}`]);
+    } else { const b=both(W.total); rows.push(['Ganado',`${money2(b.dop,'DOP')}  ·  ${money2(b.usd,'USD')}`]); }
+    rows.push(['Tasa usada',`RD$${Number(set.fx||61).toFixed(2)} por US$1`]);
+  }
+  doc.autoTable({startY:y+14,margin:{left:M,right:M},head:[['Resumen','']],body:rows,theme:'plain',
+    headStyles:{textColor:ink,fontStyle:'bold',fontSize:12},bodyStyles:{fontSize:10,textColor:ink,cellPadding:4},
+    columnStyles:{0:{textColor:muted,cellWidth:230},1:{fontStyle:'bold'}},
+    didParseCell:d=>{ if(d.section==='body'&&/^Neto|^Ganado/.test(d.row.raw[0])) d.cell.styles.textColor=green; }});
+  // Por día
+  doc.autoTable({startY:doc.lastAutoTable.finalY+16,margin:{left:M,right:M},head:[['Día','Plan (h)','Trabajado (h)']],
+    body:W.days.map(d=>[`${DAYL[d.si]} ${d.day.getDate()}${d.i===6?' (hasta 3:59 PM)':''}`,String(d.planned),fmt1(d.worked)])
+      .concat([['Total',String(W.days.reduce((a,d)=>a+d.planned,0)),fmt1(W.total)]]),
+    headStyles:{fillColor:blue,fontSize:10},bodyStyles:{fontSize:10},columnStyles:{1:{halign:'right'},2:{halign:'right'}},
+    
+    didParseCell:d=>{ if(d.column.index>0) d.cell.styles.halign='right'; if(d.section==='body'&&d.row.index===7) d.cell.styles.fontStyle='bold'; }});
+  // Turnos
+  const shifts=W.shifts.slice().sort((a,b)=>a.start-b.start);
+  doc.autoTable({startY:doc.lastAutoTable.finalY+16,margin:{left:M,right:M},head:[['Fecha','Entrada','Salida','Duración','Nota']],
+    body: shifts.length? shifts.map(s=>[dfmt(s.start),tfmt(s.start),s.end?tfmt(s.end):'en curso',hm(dur(s,now)),s.note||'']) : [['Sin turnos registrados','','','','']],
+    headStyles:{fillColor:ink,fontSize:10},bodyStyles:{fontSize:9},columnStyles:{3:{halign:'right'},4:{cellWidth:160}}});
+  // Estudio en el mismo rango
+  const st=S.study.filter(s=>s.start>=pp.ps&&s.start<pp.pe).sort((a,b)=>a.start-b.start);
+  const by={}; st.forEach(s=>{ const k=s.subject||'Sin materia'; by[k]=(by[k]||0)+dur(s,now)/H; });
+  let yy=doc.lastAutoTable.finalY+28; if(yy>700){ doc.addPage(); yy=56; }
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...ink);
+  doc.text(`Estudio en el período: ${fmt1(st.reduce((a,s)=>a+dur(s,now),0)/H)} h`,M,yy);
+  doc.autoTable({startY:yy+8,margin:{left:M,right:M},head:[['Materia','Horas']],
+    body: Object.keys(by).length? Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[k,fmt1(v)]) : [['Sin sesiones registradas','']],
+    headStyles:{fillColor:green,fontSize:10},bodyStyles:{fontSize:10},columnStyles:{1:{halign:'right',cellWidth:80}}});
+  if(st.length) doc.autoTable({startY:doc.lastAutoTable.finalY+12,margin:{left:M,right:M},head:[['Fecha','Materia','Horario','Duración','Tema']],
+    body:st.map(s=>[dfmt(s.start),s.subject||'',`${tfmt(s.start)}–${s.end?tfmt(s.end):'en curso'}`,hm(dur(s,now)),s.topic||'']),
+    headStyles:{fillColor:[90,110,100],fontSize:9},bodyStyles:{fontSize:8.5},columnStyles:{4:{cellWidth:150}}});
+  const n=doc.getNumberOfPages();
+  for(let i=1;i<=n;i++){ doc.setPage(i); doc.setFontSize(8); doc.setTextColor(...muted); doc.text(`Reloj de Turnos · página ${i} de ${n}`,M,doc.internal.pageSize.getHeight()-24); }
+  const name=`reporte-horas-${new Date(pp.ps).toISOString().slice(0,10)}.pdf`;
+  const blob=doc.output('blob'), file=new File([blob],name,{type:'application/pdf'});
+  if(navigator.canShare?.({files:[file]}) && /Android|iPhone|iPad/i.test(navigator.userAgent)){ try{ await navigator.share({files:[file],title:'Reporte de horas'}); return; }catch(e){ if(e.name==='AbortError') return; } }
+  doc.save(name);
+}
+$('pdfBtn').addEventListener('click',async()=>{
+  const b=$('pdfBtn'); b.disabled=true; b.textContent='Generando…';
+  try{ await makePDF(); }catch(e){ showSync('No se pudo generar el PDF. Revisa tu conexión la primera vez que lo uses.'); }
+  b.disabled=false; b.textContent='Descargar PDF';
+});
 
 /* ---------- Respaldo ---------- */
 $('expBtn').addEventListener('click',()=>{
