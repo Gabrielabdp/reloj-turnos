@@ -30,6 +30,13 @@ create table if not exists public.settings (
 create index if not exists shifts_user_start on public.shifts (user_id, start_ms);
 create index if not exists study_user_start  on public.study  (user_id, start_ms);
 
+-- Permisos para usuarios con sesión iniciada (los proyectos nuevos no los dan solos).
+-- Las reglas RLS de abajo siguen limitando a cada cuenta a sus propios registros.
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.shifts   to authenticated;
+grant select, insert, update, delete on public.study    to authenticated;
+grant select, insert, update, delete on public.settings to authenticated;
+
 -- Cada persona solo ve y cambia sus propios registros.
 alter table public.shifts   enable row level security;
 alter table public.study    enable row level security;
