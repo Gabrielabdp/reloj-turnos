@@ -289,7 +289,8 @@ header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between
     </div>
     <p class="foot" id="storeNote"></p>
     <div class="backup">
-      <button class="btn sm" id="expBtn" type="button">Exportar respaldo</button>
+      <button class="btn sm primary" id="pdfBtn2" type="button">Descargar reporte PDF</button>
+      <button class="btn sm" id="expBtn" type="button">Respaldo para restaurar (JSON)</button>
       <label class="btn sm" for="impIn">Importar respaldo</label>
       <input id="impIn" type="file" accept="application/json,.json" hidden>
       <span class="foot" id="bkMsg"></span>
@@ -917,11 +918,12 @@ async function makePDF(){
   if(navigator.canShare?.({files:[file]}) && /Android|iPhone|iPad/i.test(navigator.userAgent)){ try{ await navigator.share({files:[file],title:'Reporte de horas'}); return; }catch(e){ if(e.name==='AbortError') return; } }
   doc.save(name);
 }
-$('pdfBtn').addEventListener('click',async()=>{
-  const b=$('pdfBtn'); b.disabled=true; b.textContent='Generando…';
+async function onPdf(b){
+  b.disabled=true; b.textContent='Generando…';
   try{ await makePDF(); }catch(e){ showSync('No se pudo generar el PDF. Revisa tu conexión la primera vez que lo uses.'); }
-  b.disabled=false; b.textContent='Descargar PDF';
-});
+  b.disabled=false; b.textContent=b.dataset.l;
+}
+['pdfBtn','pdfBtn2'].forEach(id=>{ const b=$(id); b.dataset.l=b.textContent; b.addEventListener('click',()=>onPdf(b)); });
 
 /* ---------- Respaldo ---------- */
 $('expBtn').addEventListener('click',()=>{

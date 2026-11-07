@@ -1,5 +1,5 @@
 // Funciona sin internet: guarda la app en caché. Nunca toca las llamadas a Supabase.
-const CACHE = 'reloj-turnos-v4';
+const CACHE = 'reloj-turnos-v5';
 const CORE = ['./', './index.html', './config.js', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js',
