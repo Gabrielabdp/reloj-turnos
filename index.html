@@ -96,7 +96,7 @@ header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between
 
 /* Week ledger */
 .days{display:grid;gap:4px}
-.day{display:grid;grid-template-columns:44px 1fr 92px;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;border:1px solid transparent;background:none;text-align:left;width:100%}
+.day{display:grid;grid-template-columns:44px 1fr 104px;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;border:1px solid transparent;background:none;text-align:left;width:100%}
 .day:hover{background:var(--bg)}
 .day.sel{border-color:var(--line);background:var(--bg)}
 .day .dn{font-family:var(--display);font-weight:700;line-height:1.1}
@@ -182,6 +182,36 @@ header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between
 .authform input{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;width:100%;color:var(--ink);font-size:1rem}
 .authform .btn{padding:12px}
 .hbtns{display:flex;gap:8px;flex-wrap:wrap}
+.gan{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+@media (max-width:640px){.gan{grid-template-columns:1fr}}
+.gcard{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:6px;min-width:0}
+.gcard .gt{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.gcard .gh{font-family:var(--mono);font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.gcard .gn{font-family:var(--mono);font-size:1.45rem;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--live)}
+.gcard .gs{font-family:var(--mono);font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.gcard .gb{height:6px;border-radius:99px;background:var(--bg);overflow:hidden;border:1px solid var(--line)}
+.gcard .gb i{display:block;height:100%;background:var(--work)}
+.day .hrs em{display:block;font-style:normal;color:var(--live);font-size:.78rem}
+.gx{color:var(--live)}
+.xhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+.xhead h3{margin:0;font-family:var(--display);font-size:1rem}
+.selx{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;width:100%;color:var(--ink)}
+.ahhead{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+@media (max-width:520px){.ahhead{grid-template-columns:1fr}}
+.ahbig{display:grid;gap:2px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.ahbig .n{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--study);font-variant-numeric:tabular-nums}
+.ahbig .gs{font-family:var(--mono);font-size:.82rem;color:var(--muted)}
+.tblwrap{overflow-x:auto;margin-top:12px}
+table.ah{width:100%;border-collapse:collapse;font-size:.92rem;min-width:340px}
+table.ah th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+table.ah td{padding:9px 8px;border-bottom:1px dotted var(--line)}
+table.ah .r{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.ah .b{font-weight:700;color:var(--study)}
+table.ah .m{color:var(--muted)}
+table.ah tr.tt td{font-weight:700;border-bottom:0}
+.goals{display:grid;gap:8px;margin-top:10px}
+.goal{display:grid;grid-template-columns:minmax(0,1fr) 72px auto;gap:8px;align-items:center}
+.goal input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;width:100%;color:var(--ink)}
 .syncnote{font-size:.8rem;color:var(--warn)}
 </style>
 
@@ -248,6 +278,28 @@ header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between
     </section>
   </div>
 
+  <section class="panel">
+    <div class="sethead"><h2>Ganancias</h2><span class="foot" id="gNote"></span></div>
+    <div class="gan" id="gan"></div>
+    <div class="xhead">
+      <h3>Ingresos extra del período</h3>
+      <button class="btn sm" id="xAdd" type="button">+ Ingreso extra</button>
+    </div>
+    <p class="syncnote" id="xMissing" hidden>Para guardar ingresos extra en la nube falta crear su tabla: corre extras.sql en el SQL Editor de Supabase.</p>
+    <div id="xEditorSlot"></div>
+    <div class="log" id="xList"></div>
+  </section>
+
+  <section class="panel">
+    <div class="sethead"><h2>Ahorro · <span id="ahPct">50</span>%</h2><span class="foot">Se calcula con lo que te llega más los extras</span></div>
+    <div class="ahhead" id="ahHead"></div>
+    <div class="tblwrap"><table class="ah">
+      <thead><tr><th>Meta</th><th class="r">%</th><th class="r">Este período</th><th class="r">Este mes</th></tr></thead>
+      <tbody id="ahRows"></tbody>
+    </table></div>
+    <p class="err" id="ahWarn"></p>
+  </section>
+
   <div class="grid2">
     <section class="panel">
       <h2>Semana</h2>
@@ -286,6 +338,12 @@ header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between
         <label for="ppWdIn">Retiro cada<select id="ppWdIn"><option value="1">Semana</option><option value="2.17">Quincena</option><option value="4.33">Mes</option></select></label>
       </div>
       <div class="brk" id="brk"></div>
+    </div>
+    <div class="ppbox">
+      <div class="sethead"><span class="chk">Ahorro</span>
+        <label class="sgoal" for="savePctIn">Ahorrar <input id="savePctIn" type="text" inputmode="decimal" autocomplete="off"> % de lo que me llega</label></div>
+      <div class="goals" id="goalsEd"></div>
+      <div class="backup"><button class="btn sm" id="goalAdd" type="button">+ Agregar meta</button><span class="foot" id="goalSum"></span></div>
     </div>
     <p class="foot" id="storeNote"></p>
     <div class="backup">
@@ -377,7 +435,7 @@ const DAYL = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Doming
 const TAGS = {work:'Trabajo',class:'Clase presencial',virtual:'Clase virtual',study:'Estudio'};
 
 /* ---------- State ---------- */
-const S = { shifts: [], study: [], sEditing:null, sConfirmDel:null, sBusy:false, settings:{rate:0,cur:'USD',goal:64,fx:61,pp:true,ppFee:5.4,ppFixed:0.30,ppPays:1,ppOut:'DOP',ppWd:4.33,studyGoal:12}, weekOff:0, selDay:null, editing:null, confirmDel:null, busy:false };
+const S = { shifts: [], study: [], extras: [], xEditing:null, xConfirmDel:null, sEditing:null, sConfirmDel:null, sBusy:false, settings:{rate:0,cur:'USD',goal:64,fx:61,pp:true,ppFee:5.4,ppFixed:0.30,ppPays:1,ppOut:'DOP',ppWd:4.33,studyGoal:12,savePct:50,goals:[{n:'Implante',p:30},{n:'FUNDAPEC (abono)',p:20},{n:'Honda Accord',p:20},{n:'Pasantía J-1',p:15},{n:'Punta Cana + Summer Work',p:15}]}, weekOff:0, selDay:null, editing:null, confirmDel:null, busy:false };
 let db = null;
 
 /* ---------- Time helpers ---------- */
@@ -393,18 +451,28 @@ const tfmt = t => new Date(t).toLocaleTimeString('es-DO',{hour:'numeric',minute:
 const dfmt = t => new Date(t).toLocaleDateString('es-DO',{weekday:'short',day:'numeric',month:'short'});
 function toLocalInput(t){ const d=new Date(t); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
 const money = (v,cur) => cur==='USD' ? 'US$'+v.toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2}) : 'RD$'+Math.round(v).toLocaleString('es-DO');
-function paypal(hours){
+function paypal(hours,w=1){   // w = cuántas semanas cubre este monto (día = 1/7, mes ≈ 4.3)
   const s=S.settings, fx=s.fx||61;
   const grossUsd = s.cur==='USD' ? hours*s.rate : hours*s.rate/fx;
-  const fee = grossUsd>0 ? grossUsd*(s.ppFee||0)/100 + (s.ppFixed||0)*(s.ppPays||0) : 0;
+  const fee = grossUsd>0 ? grossUsd*(s.ppFee||0)/100 + (s.ppFixed||0)*(s.ppPays||0)*w : 0;
   const bal = Math.max(0, grossUsd-fee);
   let out={grossUsd,fee,bal,conv:0,wd:0,netUsd:bal,netDop:bal*fx};
   const wk=s.ppWd||4.33; // semanas que se acumulan antes de cada retiro
-  if(bal>0 && s.ppOut==='DOP'){ out.conv=bal*fx*0.035; out.wd=100/wk; out.netDop=Math.max(0,bal*fx-out.conv-out.wd); out.netUsd=out.netDop/fx; }
-  else if(bal>0 && s.ppOut==='USDBANK'){ out.wd=Math.max(10,bal*wk*0.005)/wk; out.netUsd=Math.max(0,bal-out.wd); out.netDop=out.netUsd*fx; }
+  if(bal>0 && s.ppOut==='DOP'){ out.conv=bal*fx*0.035; out.wd=100*w/wk; out.netDop=Math.max(0,bal*fx-out.conv-out.wd); out.netUsd=out.netDop/fx; }
+  else if(bal>0 && s.ppOut==='USDBANK'){ out.wd=Math.max(10,(bal/w)*wk*0.005)*w/wk; out.netUsd=Math.max(0,bal-out.wd); out.netDop=out.netUsd*fx; }
   return out;
 }
 function both(hours){ const fx=S.settings.fx||61, base=hours*S.settings.rate; const dop=S.settings.cur==='USD'?base*fx:base, usd=S.settings.cur==='USD'?base:base/fx; return {dop,usd}; }
+function earn(hours,w=1){
+  const fx=S.settings.fx||61;
+  if(S.settings.pp){ const p=paypal(hours,w); return {grossUsd:p.grossUsd,grossDop:p.grossUsd*fx,netUsd:p.netUsd,netDop:p.netDop}; }
+  const b=both(hours); return {grossUsd:b.usd,grossDop:b.dop,netUsd:b.usd,netDop:b.dop};
+}
+const fxOf=()=>S.settings.fx||61;
+const extrasIn=(a,b)=>S.extras.filter(x=>x.at>=a&&x.at<b);
+const extrasDop=(a,b)=>extrasIn(a,b).reduce((t,x)=>t+(x.cur==='USD'?x.amount*fxOf():x.amount),0);
+const hoursIn=(a,b,now)=>S.shifts.filter(s=>s.start>=a&&s.start<b).reduce((t,s)=>t+dur(s,now),0)/H;
+function plannedIn(a,b){ let t=0; const d0=new Date(a); d0.setHours(0,0,0,0); for(let d=d0; d.getTime()<b; d=addDays(d,1)){ SCHED[(d.getDay()+6)%7].filter(x=>x.t==='work').forEach(x=>{ const [s]=blockRange(d,x); if(s>=a&&s<b) t+=x.h; }); } return t; }
 const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 const active = () => S.shifts.filter(s=>!s.end).sort((a,b)=>b.start-a.start)[0] || null;
@@ -421,24 +489,27 @@ function payPeriod(off){
 /* ---------- Datos: Supabase + caché en el teléfono + cola para cuando no hay internet ---------- */
 const CFG=window.RT_CONFIG||{};
 const QKEY='reloj-turnos-cola';
+let extrasMissing=false;
 let sb=null, uid=null, channel=null, flushing=false, pullTimer=null;
 const cacheKey=()=> 'reloj-turnos-datos:'+uid;
-function loadLocal(){ try{ const j=JSON.parse(localStorage.getItem(cacheKey())||'{}'); S.shifts=j.shifts||[]; S.study=j.study||[]; if(j.settings) S.settings={...S.settings,...j.settings}; }catch{} }
-function saveLocal(){ try{ localStorage.setItem(cacheKey(),JSON.stringify({shifts:S.shifts,study:S.study,settings:S.settings})); }catch{} }
+function loadLocal(){ try{ const j=JSON.parse(localStorage.getItem(cacheKey())||'{}'); S.shifts=j.shifts||[]; S.study=j.study||[]; S.extras=j.extras||[]; if(j.settings) S.settings={...S.settings,...j.settings}; }catch{} }
+function saveLocal(){ try{ localStorage.setItem(cacheKey(),JSON.stringify({shifts:S.shifts,study:S.study,extras:S.extras,settings:S.settings})); }catch{} }
 function readQ(){ try{ return (JSON.parse(localStorage.getItem(QKEY)||'[]')).filter(o=>o.uid===uid); }catch{ return []; } }
 function writeQ(q){ try{ const others=(JSON.parse(localStorage.getItem(QKEY)||'[]')).filter(o=>o.uid!==uid); localStorage.setItem(QKEY,JSON.stringify(others.concat(q))); }catch{} }
 const newId = () => 's'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 
 const toRow=(table,x)=> table==='shifts'
   ? {id:x.id,user_id:uid,start_ms:x.start,end_ms:x.end??null,note:x.note||''}
+  : table==='extras' ? {id:x.id,user_id:uid,at_ms:x.at,amount:x.amount,cur:x.cur,note:x.note||''}
   : {id:x.id,user_id:uid,start_ms:x.start,end_ms:x.end??null,subject:x.subject||'',topic:x.topic||''};
 const fromRow=(table,r)=> table==='shifts'
   ? {id:r.id,start:Number(r.start_ms),end:r.end_ms==null?null:Number(r.end_ms),note:r.note||''}
+  : table==='extras' ? {id:r.id,at:Number(r.at_ms),amount:Number(r.amount),cur:r.cur||'DOP',note:r.note||''}
   : {id:r.id,start:Number(r.start_ms),end:r.end_ms==null?null:Number(r.end_ms),subject:r.subject||'',topic:r.topic||''};
 
 function applyLocal(op){
   if(op.t==='settings'){ S.settings={...S.settings,...op.data}; return; }
-  const key=op.table==='shifts'?'shifts':'study';
+  const key=op.table;
   if(op.t==='upsert'){ const x=fromRow(op.table,op.row); const i=S[key].findIndex(y=>y.id===x.id); if(i>=0) S[key][i]=x; else S[key].push(x); }
   else S[key]=S[key].filter(y=>y.id!==op.id);
 }
@@ -475,11 +546,13 @@ async function flush(){
 async function pull(){
   if(!sb||!uid) return;
   try{
-    const [a,b,c]=await Promise.all([
-      sb.from('shifts').select('*'), sb.from('study').select('*'), sb.from('settings').select('data').maybeSingle()]);
+    const [a,b,c,x]=await Promise.all([
+      sb.from('shifts').select('*'), sb.from('study').select('*'), sb.from('settings').select('data').maybeSingle(), sb.from('extras').select('*')]);
     if(a.error||b.error) throw a.error||b.error;
     S.shifts=(a.data||[]).map(r=>fromRow('shifts',r));
     S.study=(b.data||[]).map(r=>fromRow('study',r));
+    extrasMissing=!!x.error;
+    if(!x.error) S.extras=(x.data||[]).map(r=>fromRow('extras',r));
     if(c.data?.data) S.settings={...S.settings,...c.data.data};
     readQ().forEach(applyLocal);           // cambios que aún no se han subido
     saveLocal(); syncSettingsInputs(); render();
@@ -504,13 +577,13 @@ async function startSession(user){
   $('storeNote').textContent='Tus registros se guardan en tu cuenta y se sincronizan entre tus dispositivos. Si no hay internet, se guardan en el teléfono y se suben después.';
   if(channel) sb.removeChannel(channel);
   channel=sb.channel('cambios-'+uid);
-  ['shifts','study','settings'].forEach(t=>channel.on('postgres_changes',{event:'*',schema:'public',table:t},schedulePull));
+  ['shifts','study','settings','extras'].forEach(t=>channel.on('postgres_changes',{event:'*',schema:'public',table:t},schedulePull));
   channel.subscribe();
   await flush(); await pull();
 }
 function endSession(){
   if(channel){ sb.removeChannel(channel); channel=null; }
-  uid=null; S.shifts=[]; S.study=[]; render(); showAuth(true,'');
+  uid=null; S.shifts=[]; S.study=[]; S.extras=[]; render(); showAuth(true,'');
 }
 async function initStore(){
   bindAuth();
@@ -607,6 +680,7 @@ function renderLive(){
     else { const b=both(W.total); $('kPayLbl').textContent='Ganado'; $('kPay').textContent=money(b.dop,'DOP'); $('kPay2').textContent=money(b.usd,'USD'); }
   } else { $('kPayLbl').textContent='Ganado'; $('kPay').textContent='Pon tu tarifa'; $('kPay2').textContent=''; }
   renderBreakdown(W.total);
+  renderGan(now,W);
   liveStudy();
 
   // day bars
@@ -614,7 +688,7 @@ function renderLive(){
     const cap=Math.max(d.planned,d.worked,1);
     el.querySelector('.bar i').style.width=Math.min(100,d.worked/cap*100)+'%';
     el.querySelector('.bar').classList.toggle('over',d.planned>0&&d.worked>=d.planned);
-    el.querySelector('.hrs').innerHTML=`${fmt1(d.worked)} <span>/ ${d.planned} h</span>`;
+    el.querySelector('.hrs').innerHTML=`${fmt1(d.worked)} <span>/ ${d.planned} h</span>${S.settings.rate>0&&d.worked>0?`<em>${money(earn(d.worked,1/7).grossUsd,'USD')}</em>`:''}`;
   });
   // live row
   if(a){ const r=document.querySelector(`.row[data-id="${a.id}"] .dur`); if(r) r.textContent=hm(now-a.start); }
@@ -664,6 +738,7 @@ function render(){
         <button class="btn sm danger" data-del="${s.id}">${S.confirmDel===s.id?'¿Seguro? Borrar':'Borrar'}</button></div>
     </div>`).join('') : `<div class="empty">No hay turnos registrados esta semana. Usa “Marcar entrada” o agrega uno manual si se te olvidó.</div>`;
   renderStudy();
+  renderExtras();
   renderLive();
 }
 
@@ -722,11 +797,91 @@ function syncSettingsInputs(){
   $('ppIn').checked=!!s.pp; $('ppFeeIn').value=s.ppFee??5.4; $('ppFixedIn').value=Number(s.ppFixed??0.3).toFixed(2); $('ppPaysIn').value=s.ppPays??1; $('ppOutIn').value=s.ppOut||'DOP'; $('ppWdIn').value=String(s.ppWd||4.33);
   $('ppFields').hidden=!s.pp;
   if($('sGoalIn')) $('sGoalIn').value=s.studyGoal||12;
+  $('savePctIn').value=s.savePct??50;
+  renderGoalsEd();
 }
 const num = v => { const n=parseFloat(String(v).replace(',','.').replace(/[^\d.]/g,'')); return isNaN(n)?0:n; };
 $('rateIn').addEventListener('input',e=>{ S.settings.rate=Math.max(0,num(e.target.value)); renderLive(); putSettings(); });
 ['rateIn','fxIn','ppFixedIn'].forEach(id=>$(id).addEventListener('blur',()=>setTimeout(syncSettingsInputs,0)));
 $('curIn').addEventListener('change',e=>{ S.settings.cur=e.target.value; renderLive(); putSettings(); });
+function renderGan(now,W){
+  const g=$('gan');
+  if(!(S.settings.rate>0)){ g.innerHTML='<div class="empty">Pon tu pago por hora en Ajustes para ver lo que ganas por día, período y mes.</div>'; $('gNote').textContent=''; renderAhorro(now,W); return; }
+  const t0=new Date(); t0.setHours(0,0,0,0); const t1=addDays(t0,1).getTime();
+  const pp=payPeriod();
+  const ref=new Date(pp.pe-1), m0=new Date(ref.getFullYear(),ref.getMonth(),1), m1=new Date(ref.getFullYear(),ref.getMonth()+1,1);
+  const mDays=(m1-m0)/864e5;
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  const wk=(a,b)=>Math.max(1/7,(Math.min(b,now)-a)/(7*864e5));   // semanas transcurridas, para repartir comisiones fijas
+  const cards=[
+    {l:'Hoy', s:cap(t0.toLocaleDateString('es-DO',{weekday:'long',day:'numeric'})), h:hoursIn(t0.getTime(),t1,now), p:plannedIn(t0.getTime(),t1), w:1/7, wp:1/7},
+    {l:S.weekOff===0?'Este período':'Período', s:`${new Date(pp.ps).toLocaleDateString('es-DO',{day:'numeric',month:'short'})} – ${new Date(pp.pe).toLocaleDateString('es-DO',{day:'numeric',month:'short'})}`, h:W.total, p:plannedIn(pp.ps,pp.pe), w:Math.min(1,wk(pp.ps,pp.pe)), wp:1},
+    {l:'Mes', s:cap(m0.toLocaleDateString('es-DO',{month:'long',year:'numeric'})), h:hoursIn(m0.getTime(),m1.getTime(),now), p:plannedIn(m0.getTime(),m1.getTime()), w:Math.min(mDays/7,wk(m0.getTime(),m1.getTime())), wp:mDays/7},
+  ];
+  const ranges=[[t0.getTime(),t1],[pp.ps,pp.pe],[m0.getTime(),m1.getTime()]];
+  cards.forEach((c,i)=>{ c.x=extrasDop(...ranges[i]); });
+  g.innerHTML=cards.map(c=>{ const e0=earn(c.h,c.w), ep=earn(c.p,c.wp);
+    const e={...e0, netDop:e0.netDop+c.x, netUsd:e0.netUsd+c.x/fxOf()};
+    return `<div class="gcard">
+      <div class="gt"><span class="eyebrow">${c.l}</span><span class="gh">${fmt1(c.h)} / ${fmt1(c.p)} h</span></div>
+      <div class="gs">${c.s}</div>
+      <div class="gn">${money(e.netDop,'DOP')}</div>
+      <div class="gs">${money(e.netUsd,'USD')} neto · bruto ${money(e.grossUsd,'USD')}</div>
+      ${c.x?`<div class="gs gx">Incluye ${money(c.x,'DOP')} extra</div>`:''}
+      <div class="gb"><i style="width:${c.p>0?Math.min(100,c.h/c.p*100):0}%"></i></div>
+      <div class="gs">Si cumples el plan: ${money(ep.netDop,'DOP')}</div>
+    </div>`; }).join('');
+  $('gNote').textContent = S.settings.pp ? 'Neto después de PayPal' : '';
+  renderAhorro(now,W);
+}
+function periodNet(now,W){   // lo que te llega en el período + extras, en pesos
+  const pp=payPeriod(); const e=earn(W.total, Math.min(1,Math.max(1/7,(Math.min(pp.pe,now)-pp.ps)/(7*864e5))));
+  return (S.settings.rate>0?e.netDop:0)+extrasDop(pp.ps,pp.pe);
+}
+function monthRange(){ const pp=payPeriod(), ref=new Date(pp.pe-1); return [new Date(ref.getFullYear(),ref.getMonth(),1), new Date(ref.getFullYear(),ref.getMonth()+1,1)]; }
+function monthNet(now){
+  const [m0,m1]=monthRange(); const h=hoursIn(m0.getTime(),m1.getTime(),now);
+  const w=Math.min((m1-m0)/864e5/7, Math.max(1/7,(Math.min(m1.getTime(),now)-m0.getTime())/(7*864e5)));
+  return (S.settings.rate>0?earn(h,w).netDop:0)+extrasDop(m0.getTime(),m1.getTime());
+}
+function renderAhorro(now,W){
+  const s=S.settings, pct=(s.savePct??50)/100, goals=s.goals||[], tot=goals.reduce((a,g)=>a+(+g.p||0),0);
+  const pn=periodNet(now,W), mn=monthNet(now), ps=pn*pct, ms=mn*pct;
+  const [m0]=monthRange();
+  $('ahPct').textContent=s.savePct??50;
+  $('ahHead').innerHTML=`<div class="ahbig"><span class="eyebrow">Ahorra este período</span><span class="n">${money(ps,'DOP')}</span><span class="gs">${money(ps/fxOf(),'USD')} · de ${money(pn,'DOP')} que te llegan</span></div>
+    <div class="ahbig"><span class="eyebrow">En ${m0.toLocaleDateString('es-DO',{month:'long'})}</span><span class="n">${money(ms,'DOP')}</span><span class="gs">de ${money(mn,'DOP')}</span></div>`;
+  $('ahRows').innerHTML = goals.length ? goals.map(g=>`<tr><td>${esc(g.n)}</td><td class="r">${+g.p||0}%</td><td class="r b">${money(ps*(+g.p||0)/100,'DOP')}</td><td class="r m">${money(ms*(+g.p||0)/100,'DOP')}</td></tr>`).join('')
+    + `<tr class="tt"><td>Total</td><td class="r">${tot}%</td><td class="r b">${money(ps*tot/100,'DOP')}</td><td class="r m">${money(ms*tot/100,'DOP')}</td></tr>`
+    : `<tr><td colspan="4" class="empty">Agrega tus metas en Ajustes.</td></tr>`;
+  $('ahWarn').textContent = goals.length && Math.round(tot)!==100 ? `Tus metas suman ${tot}%, no 100%. Ajusta los porcentajes en Ajustes.` : '';
+}
+function renderExtras(){
+  const pp=payPeriod(), list=extrasIn(pp.ps,pp.pe).sort((a,b)=>b.at-a.at);
+  $('xEditorSlot').innerHTML = S.xEditing ? xEditorHTML(S.xEditing) : '';
+  $('xMissing').hidden=!extrasMissing;
+  $('xList').innerHTML = list.length ? list.map(x=>`<div class="row" data-id="${x.id}">
+      <div style="min-width:0"><div class="subjt">${money(x.amount,x.cur)}${x.cur==='USD'?` <span class="n2">≈ ${money(x.amount*fxOf(),'DOP')}</span>`:''}</div>
+        <div class="when">${dfmt(x.at)}</div>${x.note?`<div class="n2">${esc(x.note)}</div>`:''}</div>
+      <div class="act"><button class="btn sm" data-xedit="${x.id}">Editar</button>
+        <button class="btn sm danger" data-xdel="${x.id}">${S.xConfirmDel===x.id?'¿Seguro? Borrar':'Borrar'}</button></div></div>`).join('')
+    : `<div class="empty">Sin ingresos extra en este período.</div>`;
+}
+function xEditorHTML(x){
+  return `<form class="editor" id="xEdForm">
+    <div class="eyebrow">${x.id?'Editar ingreso extra':'Ingreso extra'}</div>
+    <div class="two">
+      <div class="f"><label for="xAmt">Cuánto te llegó</label><input id="xAmt" type="text" inputmode="decimal" autocomplete="off" required value="${x.amount?Number(x.amount).toFixed(2):''}" placeholder="Ej. 1500"></div>
+      <div class="f"><label for="xCur">Moneda</label><select id="xCur" class="selx"><option ${x.cur!=='USD'?'selected':''}>DOP</option><option ${x.cur==='USD'?'selected':''}>USD</option></select></div>
+    </div>
+    <div class="two">
+      <div class="f"><label for="xAt">Fecha</label><input id="xAt" type="date" required value="${toLocalInput(x.at).slice(0,10)}"></div>
+      <div class="f"><label for="xNote">De qué fue</label><input id="xNote" maxlength="140" value="${esc(x.note||'')}" placeholder="Ej. freelance, bono, venta"></div>
+    </div>
+    <div class="err" id="xErr"></div>
+    <div class="actions"><button class="btn primary" type="submit">Guardar</button><button class="btn" type="button" id="xCancel">Cancelar</button></div>
+  </form>`;
+}
 function renderBreakdown(hours){
   const b=$('brk'); if(!S.settings.pp||!(S.settings.rate>0)){ b.innerHTML=''; return; }
   const p=paypal(hours), fx=S.settings.fx||61, o=S.settings.ppOut;
@@ -853,6 +1008,52 @@ function route(){
 window.addEventListener('hashchange',()=>{ route(); render(); });
 route();
 
+/* ---------- Ingresos extra ---------- */
+async function putExtra(x){ enqueue({t:'upsert',table:'extras',row:toRow('extras',x)}); }
+async function delExtra(id){ enqueue({t:'delete',table:'extras',id}); }
+$('xAdd').onclick=()=>{ const now=Date.now(), pp=payPeriod(); S.xEditing={at: now>=pp.ps&&now<pp.pe?now:pp.ps+864e5/3, amount:0, cur:'DOP', note:''}; render(); $('xAmt')?.focus(); };
+$('xList').addEventListener('click',async e=>{
+  const ed=e.target.closest('[data-xedit]'), dl=e.target.closest('[data-xdel]');
+  if(ed){ S.xEditing={...S.extras.find(x=>x.id===ed.dataset.xedit)}; S.xConfirmDel=null; render(); }
+  if(dl){ const id=dl.dataset.xdel; if(S.xConfirmDel===id){ S.xConfirmDel=null; delExtra(id); } else { S.xConfirmDel=id; render(); } }
+});
+$('xEditorSlot').addEventListener('click',e=>{ if(e.target.id==='xCancel'){ S.xEditing=null; render(); } });
+$('xEditorSlot').addEventListener('submit',e=>{
+  e.preventDefault();
+  const amt=num($('xAmt').value), d=$('xAt').value;
+  if(!(amt>0)){ $('xErr').textContent='Pon cuánto te llegó.'; return; }
+  if(!d){ $('xErr').textContent='Pon la fecha.'; return; }
+  const [Y,Mo,D]=d.split('-').map(Number), keep=new Date(S.xEditing.at);
+  const at=new Date(Y,Mo-1,D,keep.getHours(),keep.getMinutes()).getTime();
+  const x={id:S.xEditing.id||newId(),at,amount:amt,cur:$('xCur').value,note:$('xNote').value.trim()};
+  S.xEditing=null; putExtra(x);
+});
+
+/* ---------- Ahorro: % y metas ---------- */
+function renderGoalsEd(){
+  const box=$('goalsEd'); if(box.contains(document.activeElement)) return;
+  const g=S.settings.goals||[];
+  box.innerHTML=g.map((x,i)=>`<div class="goal" data-i="${i}">
+    <input aria-label="Nombre de la meta" data-k="n" maxlength="40" value="${esc(x.n)}">
+    <input aria-label="Porcentaje" data-k="p" type="text" inputmode="decimal" value="${+x.p||0}">
+    <button class="btn sm danger" type="button" data-gdel="${i}" aria-label="Quitar meta">Quitar</button></div>`).join('');
+  goalSum();
+}
+function goalSum(){ const t=(S.settings.goals||[]).reduce((a,x)=>a+(+x.p||0),0); $('goalSum').textContent=`Suman ${t}%${Math.round(t)===100?'':' · deben sumar 100%'}`; $('goalSum').style.color=Math.round(t)===100?'':'var(--class)'; }
+$('goalsEd').addEventListener('input',e=>{
+  const row=e.target.closest('.goal'); if(!row) return;
+  const g=[...(S.settings.goals||[])], i=+row.dataset.i, k=e.target.dataset.k;
+  g[i]={...g[i],[k]: k==='p'?Math.max(0,num(e.target.value)):e.target.value};
+  S.settings.goals=g; goalSum(); renderLive(); putSettings();
+});
+$('goalsEd').addEventListener('click',e=>{
+  const b=e.target.closest('[data-gdel]'); if(!b) return;
+  if(b.dataset.c!=='1'){ b.dataset.c='1'; b.textContent='¿Quitar?'; return; }
+  const g=[...(S.settings.goals||[])]; g.splice(+b.dataset.gdel,1); S.settings.goals=g; renderGoalsEd(); renderLive(); putSettings();
+});
+$('goalAdd').onclick=()=>{ S.settings.goals=[...(S.settings.goals||[]),{n:'Nueva meta',p:0}]; renderGoalsEd(); renderLive(); putSettings(); $('goalsEd').querySelector('.goal:last-child input')?.select(); };
+$('savePctIn').addEventListener('input',e=>{ const v=num(e.target.value); if(v>=0&&v<=100){ S.settings.savePct=v; renderLive(); putSettings(); } });
+
 /* ---------- Reporte PDF del período de pago ---------- */
 const PDF_LIBS=['https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js','https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js'];
 function loadScript(src){ return new Promise((ok,ko)=>{ if(document.querySelector(`script[src="${src}"]`)) return ok(); const s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=ko; document.head.appendChild(s); }); }
@@ -881,6 +1082,9 @@ async function makePDF(){
       if(set.ppOut==='USDBANK') rows.push(['Retiro a banco (parte del período)','- '+money2(p.wd,'USD')]);
       rows.push(['Neto estimado',`${money2(p.netDop,'DOP')}  ·  ${money2(p.netUsd,'USD')}`]);
     } else { const b=both(W.total); rows.push(['Ganado',`${money2(b.dop,'DOP')}  ·  ${money2(b.usd,'USD')}`]); }
+    { const ref=new Date(pp.pe-1), m0=new Date(ref.getFullYear(),ref.getMonth(),1), m1=new Date(ref.getFullYear(),ref.getMonth()+1,1);
+      const mh=hoursIn(m0.getTime(),m1.getTime(),now), mn=monthNet(now);
+      rows.push([`Mes de ${m0.toLocaleDateString('es-DO',{month:'long'})} (a la fecha, con extras)`,`${fmt1(mh)} h  ·  ${money2(mn,'DOP')}  ·  ${money2(mn/fxOf(),'USD')}`]); }
     rows.push(['Tasa usada',`RD$${Number(set.fx||61).toFixed(2)} por US$1`]);
   }
   doc.autoTable({startY:y+14,margin:{left:M,right:M},head:[['Resumen','']],body:rows,theme:'plain',
@@ -888,9 +1092,10 @@ async function makePDF(){
     columnStyles:{0:{textColor:muted,cellWidth:230},1:{fontStyle:'bold'}},
     didParseCell:d=>{ if(d.section==='body'&&/^Neto|^Ganado/.test(d.row.raw[0])) d.cell.styles.textColor=green; }});
   // Por día
-  doc.autoTable({startY:doc.lastAutoTable.finalY+16,margin:{left:M,right:M},head:[['Día','Plan (h)','Trabajado (h)']],
-    body:W.days.map(d=>[`${DAYL[d.si]} ${d.day.getDate()}${d.i===6?' (hasta 3:59 PM)':''}`,String(d.planned),fmt1(d.worked)])
-      .concat([['Total',String(W.days.reduce((a,d)=>a+d.planned,0)),fmt1(W.total)]]),
+  doc.autoTable({startY:doc.lastAutoTable.finalY+16,margin:{left:M,right:M},head:[['Día','Plan (h)','Trabajado (h)'].concat(set.rate>0?['Bruto','Neto']:[])],
+    body:W.days.map(d=>[`${DAYL[d.si]} ${d.day.getDate()}${d.i===6?' (hasta 3:59 PM)':''}`,String(d.planned),fmt1(d.worked)]
+        .concat(set.rate>0?[money2(earn(d.worked,1/7).grossUsd,'USD'),money2(earn(d.worked,1/7).netDop,'DOP')]:[]))
+      .concat([['Total',String(W.days.reduce((a,d)=>a+d.planned,0)),fmt1(W.total)].concat(set.rate>0?[money2(earn(W.total).grossUsd,'USD'),money2(earn(W.total).netDop,'DOP')]:[])]),
     headStyles:{fillColor:blue,fontSize:10},bodyStyles:{fontSize:10},columnStyles:{1:{halign:'right'},2:{halign:'right'}},
     
     didParseCell:d=>{ if(d.column.index>0) d.cell.styles.halign='right'; if(d.section==='body'&&d.row.index===7) d.cell.styles.fontStyle='bold'; }});
@@ -902,6 +1107,17 @@ async function makePDF(){
   // Estudio en el mismo rango
   const st=S.study.filter(s=>s.start>=pp.ps&&s.start<pp.pe).sort((a,b)=>a.start-b.start);
   const by={}; st.forEach(s=>{ const k=s.subject||'Sin materia'; by[k]=(by[k]||0)+dur(s,now)/H; });
+  // Extras y ahorro
+  const xs=extrasIn(pp.ps,pp.pe).sort((a,b)=>a.at-b.at);
+  if(xs.length) doc.autoTable({startY:doc.lastAutoTable.finalY+16,margin:{left:M,right:M},head:[['Ingreso extra','Monto','En pesos']],
+    body:xs.map(x=>[`${dfmt(x.at)}${x.note?' · '+x.note:''}`,money2(x.amount,x.cur),money2(x.cur==='USD'?x.amount*fxOf():x.amount,'DOP')]),
+    headStyles:{fillColor:green,fontSize:10},bodyStyles:{fontSize:9.5},columnStyles:{1:{halign:'right'},2:{halign:'right'}}});
+  { const pn=periodNet(now,W), sp=(set.savePct??50)/100, goals=set.goals||[];
+    doc.autoTable({startY:doc.lastAutoTable.finalY+16,margin:{left:M,right:M},
+      head:[[`Ahorro ${set.savePct??50}% de ${money2(pn,'DOP')}`,'%','Monto']],
+      body:goals.map(g=>[g.n,`${+g.p||0}%`,money2(pn*sp*(+g.p||0)/100,'DOP')]).concat([['Total a ahorrar','',money2(pn*sp,'DOP')]]),
+      headStyles:{fillColor:[20,120,90],fontSize:10},bodyStyles:{fontSize:10},columnStyles:{1:{halign:'right',cellWidth:50},2:{halign:'right',cellWidth:110}},
+      didParseCell:d=>{ if(d.section==='body'&&d.row.index===goals.length) d.cell.styles.fontStyle='bold'; }}); }
   let yy=doc.lastAutoTable.finalY+28; if(yy>700){ doc.addPage(); yy=56; }
   doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...ink);
   doc.text(`Estudio en el período: ${fmt1(st.reduce((a,s)=>a+dur(s,now),0)/H)} h`,M,yy);
