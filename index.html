@@ -833,7 +833,7 @@ function renderGan(now,W){
       <div class="gs">${money(e.netUsd,'USD')} neto · bruto ${money(e.grossUsd,'USD')}</div>
       ${c.x?`<div class="gs gx">Incluye ${money(c.x,'DOP')} extra</div>`:''}
       <div class="gb"><i style="width:${c.p>0?Math.min(100,c.h/c.p*100):0}%"></i></div>
-      <div class="gs">Si cumples el plan: ${money(ep.netDop,'DOP')}</div>
+      <div class="gs">Si cumples el plan: ${money(ep.netDop,'DOP')} · ${money(ep.netUsd,'USD')}</div>
     </div>`; }).join('');
   $('gNote').textContent = S.settings.pp ? 'Neto después de PayPal' : '';
   renderAhorro(now,W);
